@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8">
+		<style>
+			.highcharts-tooltip a {
+				color: #0080ff;
+			}
+		</style>
+		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
+	    <script src="http://code.highcharts.com/highcharts.js"></script>
+		<script type="text/javascript">
+			
+			// Plugin to add support for credits.target in Highcharts.
+			$(document).ready(function () {
+				Highcharts.wrap(Highcharts.Chart.prototype, 'showCredits', function (proceed, credits) {
+					proceed.call(this, credits);
+					if (this.credits && credits.target) {
+        				this.credits.on('click', function () {
+            				$('<a>').attr({
+                				href: credits.href,
+                				target: credits.target
+            				})[0].click();
+        				});
+    				}    
+				});
+
+				$(function () {
+				    $('#container').highcharts({
+				        chart: {
+				            type: 'bar'
+				        },
+				        title: {
+				            text: "Freddie Gray's case settled for $6.4 million, surpassing the $5.9 million Eric Garner settlement"
+				        },
+				        subtitle: {
+            				text: '<strong>By Sissi Cao and Madeleine Deason</strong>' + '<br>CAPITAL NEWS SERVICE<br>' + 'The settlement was reached five months after Gray, 25, died from a neck injury while in police custody. The $6.4 million tops the list of other 2015 settlements for fatal cases involving police. Source: CNS Staff research'
+        				},
+				        xAxis: {
+				            categories: ['Freddie Gray', 'Eric Garner', 'Ricardo Diaz-Zeferino', 'John Geer', 'Marine Cpl. Allan DeVillina II']
+				        },
+				        yAxis: {
+				            min: 0,
+				            title: {
+				                text: 'Dollars (millions)',
+				                align: 'low'
+				            }
+				        },
+				        tooltip: {
+            				valueSuffix: ' million',
+            				formatter: function() {
+           						var s = '<b>'+ this.point.desc +'</b>';            
+           						return s;
+       							},
+       						shared: false,
+       						useHTML: true,
+        				},
+        				credits: {
+			        		enabled: true,
+			            	text: 'Capital News Service',
+			            	href: 'http://cnsmaryland.org/',
+			            	target: '_blank'
+			        	},
+				   
+				        plotOptions: {
+				            bar: {
+                				dataLabels: {
+                    				enabled: true,
+                    				format: '${point.y:,.1f}'
+                				}
+            				}
+				        },
+				        series: [{
+				        	showInLegend: false,
+				            data: [ {y : 6.4, desc: 'Freddie Gray<br>Age: 25 <br> Location: Baltimore <br> Incident date: Apr. 2015 <br> Settlement date: Sept. 2015 <br> <a href="https://en.wikipedia.org/wiki/Death_of_Freddie_Gray" target="_blank">Learn more</a>'},
+				            		{y : 5.9, desc: 'Eric Garner <br> Age: 43 <br> Location: New York <br> Incident date: July 2014 <br> Settlement date: July 2015 <br> <a href="https://en.wikipedia.org/wiki/Death_of_Eric_Garner" target="_blank">Learn more</a>'},
+				            		{y : 4.7, desc: 'Ricardo Diaz-Zeferino <br> Age: 34 <br> Location: Los Angeles <br> Incident date: June 2013 <br> Settlement date: Feb. 2015 <br> <a href="http://www.latimes.com/local/crime/la-me-settlements-20150716-story.html" target="_blank">Learn more</a>'},
+				            		{y : 3.0, desc: 'John Geer <br> Age: 46 <br> Location: Fairfax, Va. <br> Incident date: Aug. 2013 <br> Settlement date: Apr. 2015 <br> <a href="http://www.washingtonpost.com/local/crime/fairfax-pays-295-million-to-settle-suit-in-john-geer-police-killing/2015/04/21/5fe3d818-e834-11e4-9767-6276fc9b0ada_story.html" target="_blank">Learn more</a>'},
+				            		{y : 2.6, desc: 'Marine Cpl. Allan DeVillina II <br> Age: 22 <br> Location: Palm Springs, Calif. <br> Incident date: Nov. 2013 <br> Settlement date: Sept. 2015 <br> <a href="http://www.marinecorpstimes.com/story/military/2015/09/02/palm-springs-pay-nearly-26-million-over-marine-shooting/71564346/" target="_blank">Learn more</a>'} ],
+				            color: '#FFCC70'
+				        }]
+				    });
+				});
+			});
+		</script>
+	</head>
+
+	<body>
+		<div id="container" style="max-width: 600px; min-width: 310px; height: 550px; margin: 0 auto"></div>
+	</body>
+</html>

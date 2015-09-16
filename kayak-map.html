@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style type="text/css">
+      html, body, h2 { height: 100%; margin: 0; padding: 0; font-family: 'Open Sans', sans-serif;}
+      #map { height: 100%; max-width: none; }
+      .header {
+        margin: 1em 1em;
+      }
+      span {
+        font-size: .8em;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h2>Follow the Route: Circumnavigating the Delmarva Peninsula by Kayak</h2>
+      <span>A decade after they first circumnavigated the Delmarva peninsula, Don Baugh, 61, and Tom Horton, 70, are kayaking 500 miles around the peninsula in 30 days to assess the health of local ecosystems. Their trip began from Sandy Point State Park at the foot of the Chesapeake Bay Bridge on Sept. 9, 2015. Approximate schedule and destinations are mapped below. Source: <a href="http://upstreamalliance.org/">Upstream Alliance</a><br><strong>By Madeleine Deason and Rose Creasman Welcome (CAPITAL NEWS SERVICE)</strong></span>
+    </div>
+    <div id="map"></div>
+    <script type="text/javascript">
+
+var map;
+function initMap() {
+  var map = new google.maps.Map(document.getElementById('map'), {
+    center: {lat: 38.3658, lng: -75.5933},
+    zoom: 8,
+    mapTypeId: google.maps.MapTypeId.TERRAIN
+  });
+  var layer = new google.maps.FusionTablesLayer({
+    query: {
+      select: 'Latitude',
+      from: '[FusionID]'
+    },
+  });
+  layer.setMap(map);
+
+  // Define a symbol using a predefined path (an arrow)
+  // supplied by the Google Maps JavaScript API.
+  var lineSymbol = {
+    path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW
+  };
+
+  // Create the polyline and add the symbol via the 'icons' property.
+  var line = new google.maps.Polyline({
+    path: [
+    {lat: 39.02303, lng:  -76.410211}, 
+    {lat: 39.157788, lng: -76.238421},
+    {lat: 39.378777, lng: -76.112025},
+    {lat: 39.5444, lng: -75.7206}
+    ],
+    geodesic: true,
+    strokeWeight: 3,
+    strokeOpacity: .5,
+    icons: [{
+      icon: lineSymbol,
+      offset: '100%'
+    }],
+    map: map
+  });
+
+  var line2 = new google.maps.Polyline({
+    path: [
+    {lat: 39.5444, lng: -75.7206},
+    {lat: 39.56762, lng: -75.577695},
+    {lat: 39.06, lng: -75.3986},
+    {lat: 38.9175, lng: -75.3081},
+    {lat: 38.7158, lng: -75.0831},   
+    ],
+    geodesic: true,
+    strokeWeight: 3,
+    strokeOpacity: .5,
+    icons: [{
+      icon: lineSymbol,
+      offset: '100%'
+    }],
+    map: map
+  });
+
+  var line3 = new google.maps.Polyline({
+    path: [
+    {lat: 38.7158, lng: -75.0831},
+    {lat: 38.3914, lng: -75.0697},
+    {lat: 38.3914, lng: -75.0697},
+    {lat: 37.9764, lng: -75.3048},    
+    {lat: 37.9347, lng: -75.3678},
+    {lat: 37.8742, lng: -75.5244},
+    {lat: 37.93346, lng: -75.87882},
+    {lat: 37.2667,     lng: -75.7992}
+    ],
+    geodesic: true,
+    strokeWeight: 3,
+    strokeOpacity: .5,
+    icons: [{
+      icon: lineSymbol,
+      offset: '100%'
+    }],
+    map: map
+  });
+
+  var line4 = new google.maps.Polyline({
+    path: [
+    {lat: 37.2667,     lng: -75.7992},
+    {lat: 37.2288,    lng: -76.0469},
+    {lat: 37.13, lng: -75.9583},
+    {lat: 37.13, lng: -75.9583},
+    {lat: 37.8258, lng:    -75.9922},
+    {lat: 37.9686, lng: -76.0228},
+    {lat: 38.3, lng: -76.2081}
+    ],
+    geodesic: true,
+    strokeWeight: 3,
+    strokeOpacity: .5,
+    icons: [{
+      icon: lineSymbol,
+      offset: '100%'
+    }],
+    map: map
+  });
+
+  var line5 = new google.maps.Polyline({
+    path: [
+    {lat: 38.3, lng: -76.2081},
+     {lat: 38.3259559, lng: -76.1846644},
+    {lat: 38.7089, lng:    -76.335},
+    {lat: 38.7669, lng:    -76.3817},
+    {lat: 39.0155, lng:    -76.3988}
+    ],
+    geodesic: true,
+    strokeWeight: 3,
+    strokeOpacity: .5,
+    icons: [{
+      icon: lineSymbol,
+      offset: '100%'
+    }],
+    map: map
+  });
+
+}
+
+    </script>
+    <script async defer
+      src="https://maps.googleapis.com/maps/api/js?key=[APIKEY]&callback=initMap">
+    </script>
+  </body>
+</html>
