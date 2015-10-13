@@ -1,0 +1,386 @@
+<!doctype><html><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Haunted Maryland</title>
+  <meta name="description" content="">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="icon" type="image/x-icon" href="https://s3.amazonaws.com/com.cartodb.users-assets.production/production/mdeason89/assets/20151008151608skull.png">
+  <link rel="icon" type="image/png" href="https://s3.amazonaws.com/com.cartodb.users-assets.production/production/mdeason89/assets/20151008151608skull.png">
+
+  <link rel="stylesheet" href="http://cartodb-libs.global.ssl.fastly.net/cartodb.js/v3/themes/css/cartodb.css">
+  <link rel="stylesheet" href="http://cartodb.github.io/odyssey.js/sandbox/css/scroll.css">
+  <link href='https://fonts.googleapis.com/css?family=Special+Elite' rel='stylesheet' type='text/css'>
+  <style>
+    #layout {
+      background-color: #222;
+    }
+    .inner-header {
+      background-color: #222;
+    }
+    #header h1{
+      font-family: "Special Elite";
+      font-weight: 700;
+      color: #990000;
+      letter-spacing: 3;
+      font-size: 3em;
+    }
+    #header p {
+      font-family: "Roboto";
+      font-weight: 400;
+      color: #eee;
+    }
+    #content>div {
+      background-color: #eee;
+    }
+    #content h1 {
+      font-family: "Special Elite";
+      font-weight: 700;
+    }
+    #content h2 {
+      font-family: "Roboto";
+      font-weight: 400;
+    }
+    #content a {
+      color: #990000;
+      text-decoration: underline;
+    }
+    #content a:hover {
+      color: #5b0000;
+    }
+  </style>
+  <script src="http://cartodb.github.io/odyssey.js/vendor/modernizr-2.6.2.min.js"></script>
+</head>
+<body>
+  <div id="layout">
+    <!--<div class="progress-bar"></div>-->
+
+    <div class="inner-header">
+      <div id="header"></div>
+    </div>
+
+    <div id="map_pos">
+      <div id="map_container">
+        <div id="map"></div>
+      </div>
+    </div>
+
+    <div id="content"></div>
+
+    <div id="credits">
+      <span class="title" id="title">Title</span>
+      <span class="author"><b id="author">By Name of</b> <a href="http://cnsmaryland.org/">CAPITAL NEWS SERVICE</a><span>
+    </span></span></div>
+  </div> <!-- layout -->
+
+  <script src="http://cartodb-libs.global.ssl.fastly.net/cartodb.js/v3/cartodb.js"></script>
+  <script src="http://cartodb.github.io/odyssey.js/dist/odyssey.js" charset="UTF-8"></script>
+
+  <script>
+    O.Template({
+      init: function() {
+        var baseurl = this.baseurl = 'http://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png';
+        var map = this.map = L.map('map',{
+          center: [0, 0],
+          zoom: 4
+        });
+
+        this.map.scrollWheelZoom.disable();
+
+        var basemap = this.basemap = L.tileLayer(baseurl, {
+          attribution: 'data OSM - map CartoDB'
+        }).addTo(map);
+
+        var story = O.Story()
+
+        this.story = story;
+        this.miniprogressbar = O.MiniProgressBar();
+
+        // trigger when  map_pos go out of the screen
+        this.edge = O.Edge(
+          O.Triggers.Scroll().less('map_pos').offset(0),
+          O.Triggers.Scroll().greater('map_pos').offset(0)
+        )
+      },
+
+      update: function(actions) {
+        var self = this;
+
+        this.story.clear();
+
+        if (this.baseurl && (this.baseurl !== actions.global.baseurl)) {
+          this.baseurl = actions.global.baseurl || 'http://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png';
+
+          this.basemap.setUrl(this.baseurl);
+        }
+
+        if (this.cartoDBLayer && ("http://"+self.cartoDBLayer.options.user_name+".cartodb.com/api/v2/viz/"+self.cartoDBLayer.options.layer_definition.stat_tag+"/viz.json" !== actions.global.vizjson)) {
+          this.map.removeLayer(this.cartoDBLayer);
+
+          this.cartoDBLayer = null;
+          this.created = false;
+        }
+
+        if (actions.global.vizjson && !this.cartoDBLayer) {
+          if (!this.created) { // sendCode debounce < vis loader
+            cdb.vis.Loader.get(actions.global.vizjson, function(vizjson) {
+              self.map.fitBounds(vizjson.bounds);
+
+              cartodb.createLayer(self.map, vizjson)
+                .done(function(layer) {
+                  self.cartoDBLayer = layer;
+
+                  var sublayer = layer.getSubLayer(0),
+                      layer_name = layer.layers[0].options.layer_name,
+                      filter = actions.global.cartodb_filter ? " WHERE "+actions.global.cartodb_filter : "";
+
+                  sublayer.setSQL("SELECT * FROM "+layer_name+filter)
+
+                  self.map.addLayer(layer);
+
+                  self._resetActions(actions);
+                }).on('error', function(err) {
+                  console.log("some error occurred: " + err);
+                });
+            });
+
+            this.created = true;
+          }
+
+          return;
+        }
+
+        this._resetActions(actions);
+      },
+
+      _resetActions: function(actions) {
+        // update footer title and author
+        var title_ = actions.global.title === undefined ? '' : actions.global.title,
+            author_ = actions.global.author === undefined ? 'of' : 'By '+actions.global.author+' of';
+
+        document.getElementById('title').innerHTML = title_;
+        document.getElementById('author').innerHTML = author_;
+        document.title = title_ + " | " + 'Haunted Maryland';
+
+        var TRIGGER_LINE = this.map.getSize().y + 50;
+        this.story.addEvent(
+          this.edge,
+          O.Parallel(
+            O.Actions.CSS($('#map_container')).toggleClass('attachTop'),
+            O.Actions.CSS($('#content')).toggleClass('attachMap'),
+            O.Actions.Debug().log('attach')
+          )
+        )
+
+        // create content
+        var content = '';
+
+        var slide_ = actions[0];
+        $('#header').html(slide_.html());
+
+        this.story
+          .addState(
+            O.Scroll().within($('#header')),
+            slide_(this)
+          );
+
+        for(var i = 1; i < actions.length; ++i) {
+          var slide = actions[i];
+          content += "<div id='s_" + i +"'>" + slide.html() + "</div>";
+        }
+
+        $('#content').html(content);
+
+        // first slide is the header, skip it
+        for(var i = 1; i < actions.length; ++i) {
+          var slide = actions[i];
+          this.story.addState(
+            O.Triggers.Scroll().within('s_' + i).offset(TRIGGER_LINE),
+            O.Parallel(
+              slide(this),
+              this.miniprogressbar.percent(100*i/(actions.length - 1))
+            )
+          )
+        }
+
+        if(window.scrollY === 0) {
+          this.story.go(0);
+        }
+      }
+    });
+  </script>
+
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-20934186-21', 'cartodb.github.io');
+    ga('send', 'pageview');
+  </script>
+
+
+<script id="md_template" type="text/template">```
+-baseurl: "http://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png"
+-title: ""
+-author: "Madeleine Deason and Rose Creasman Welcome"
+```
+
+#Famous Haunts of Maryland
+```
+L.marker([38.951389, -76.693333], {icon: new L.icon({iconUrl: 'https://s3.amazonaws.com/com.cartodb.users-assets.production/production/mdeason89/assets/20151009183344skull-red.png', iconSize: [25,38]})}).actions.addRemove(S.map)
+L.marker([38.990636, -76.786991], {icon: new L.icon({iconUrl: 'https://s3.amazonaws.com/com.cartodb.users-assets.production/production/mdeason89/assets/20151009183344skull-red.png', iconSize: [25,38]})}).actions.addRemove(S.map)
+L.marker([39.027305, -76.873177], {icon: new L.icon({iconUrl: 'https://s3.amazonaws.com/com.cartodb.users-assets.production/production/mdeason89/assets/20151009183344skull-red.png', iconSize: [25,38]})}).actions.addRemove(S.map)
+L.marker([39.39412, -77.629247], {icon: new L.icon({iconUrl: 'https://s3.amazonaws.com/com.cartodb.users-assets.production/production/mdeason89/assets/20151009183344skull-red.png', iconSize: [25,38]})}).actions.addRemove(S.map)
+L.marker([39.292498, -76.633042], {icon: new L.icon({iconUrl: 'https://s3.amazonaws.com/com.cartodb.users-assets.production/production/mdeason89/assets/20151009183344skull-red.png', iconSize: [25,38]})}).actions.addRemove(S.map)
+L.marker([39.290745, -76.623378], {icon: new L.icon({iconUrl: 'https://s3.amazonaws.com/com.cartodb.users-assets.production/production/mdeason89/assets/20151009183344skull-red.png', iconSize: [25,38]})}).actions.addRemove(S.map)
+L.marker([38.960833, -76.813333], {icon: new L.icon({iconUrl: 'https://s3.amazonaws.com/com.cartodb.users-assets.production/production/mdeason89/assets/20151009183344skull-red.png', iconSize: [25,38]})}).actions.addRemove(S.map)
+L.marker([38.532763, -77.034788], {icon: new L.icon({iconUrl: 'https://s3.amazonaws.com/com.cartodb.users-assets.production/production/mdeason89/assets/20151009183344skull-red.png', iconSize: [25,38]})}).actions.addRemove(S.map)
+L.marker([38.379722, -76.538889], {icon: new L.icon({iconUrl: 'https://s3.amazonaws.com/com.cartodb.users-assets.production/production/mdeason89/assets/20151009183344skull-red.png', iconSize: [25,38]})}).actions.addRemove(S.map)
+L.marker([39.052222, -76.901389], {icon: new L.icon({iconUrl: 'https://s3.amazonaws.com/com.cartodb.users-assets.production/production/mdeason89/assets/20151009183344skull-red.png', iconSize: [25,38]})}).actions.addRemove(S.map)
+L.marker([38.290121, -76.635121], {icon: new L.icon({iconUrl: 'https://s3.amazonaws.com/com.cartodb.users-assets.production/production/mdeason89/assets/20151009183344skull-red.png', iconSize: [25,38]})}).on("click", function(e){window.location('#content');}).actions.addTo(S.map)
+- center: [38.7883, -76.7505]
+- zoom: 7
+```
+by [MADELEINE DEASON](https://twitter.com/maddydeason) and [ROSE CREASMAN WELCOME](https://twitter.com/RoseCWelcome) ([CAPITAL NEWS SERVICE](http://cnsmaryland.org/))
+
+Maryland has its fair share of haunts: A bloodthirsty goat-human hybrid, haunted Victorian ruins, and a remote hill where cars mysteriously roll uphill are among many legends native Marylanders have passed down over generations. This Halloween, take a virtual (or actual, if you dare) tour of the spookiest spots in the state. 
+
+#Goatman
+##Beltsville and Bowie, Prince George’s County
+```
+L.marker([38.990636, -76.786991], {icon: new L.icon({iconUrl: 'https://s3.amazonaws.com/com.cartodb.users-assets.production/production/mdeason89/assets/20151009183127skullred2.png'})}).actions.addRemove(S.map)
+L.marker([39.027305, -76.873177], {icon: new L.icon({iconUrl: 'https://s3.amazonaws.com/com.cartodb.users-assets.production/production/mdeason89/assets/20151009183127skullred2.png'})}).actions.addRemove(S.map)
+- center: [39.0125, -76.8334]
+- zoom: 12
+```
+![Goatman](http://cnsmaryland.org/wp-content/uploads/2015/10/goatman-e1444283864917.jpg)
+
+(Credit: Madeleine Deason)
+
+Maryland’s favorite spook is famous nationwide: The Goatman, a bloodthirsty man-goat hybrid, was the inspiration for the 2012 campy horror film [Deadly Detour](http://www.amazon.com/Deadly-Detour-The-Goat-Murders/dp/B007EQQ7LO). Said to be the result of an experiment gone horribly wrong at the USDA’s Agricultural Research Center in Beltsville, the Goatman legend can be traced back to the 1970s. Most alleged Ghostman sightings occur near Fletchertown Road and Lottsford Road in Prince George’s County.
+
+#Crybaby Bridge
+##Governor's Bridge, Davidsonville, Anne Arundel County
+```
+L.marker([38.951389, -76.693333], {icon: new L.icon({iconUrl: 'https://s3.amazonaws.com/com.cartodb.users-assets.production/production/mdeason89/assets/20151009183127skullred2.png'})}).actions.addRemove(S.map)
+- center: [38.951389, -76.693333]
+- zoom: 14
+```
+![Crybaby Bridge](http://cnsmaryland.org/wp-content/uploads/2015/10/Patuxent.River_-e1444249359218.jpg)
+
+(Photo: Wikimedia Commons)
+
+Found in many states, “crybaby bridges” supposedly evoke the sounds of a screaming infant from the water below, and are usually tied to folklore surrounding the death of a baby. At Governor’s Bridge in Davidsonville, it’s said that an unmarried woman drowned her baby out of fear of judgement. Another woman and infant were murdered near the bridge in the 1930s, according to legend.
+
+#Spook Hill
+##Burkittsville, Frederick County
+```
+L.marker([39.39412, -77.629247], {icon: new L.icon({iconUrl: 'https://s3.amazonaws.com/com.cartodb.users-assets.production/production/mdeason89/assets/20151009183127skullred2.png'})}).actions.addRemove(S.map)
+- center: [39.39412, -77.629247]
+- zoom: 14
+```
+![Spook Hill](http://cnsmaryland.org/wp-content/uploads/2015/10/spookhill-e1444286840940.jpg)
+
+(Credit: Madeleine Deason)
+
+The ghosts of Civil War soldiers are thought to push cars uphill at Spook Hill, a [gravity hill](https://en.wikipedia.org/wiki/Gravity_hill) in Burkittsville, a small town in Frederick County made famous as the setting for the documentary-style horror film [The Blair Witch Project](https://en.wikipedia.org/wiki/Burkittsville,_Maryland#Blair_Witch). According to legend, ghosts of soldiers who died in the Battle of Burkittsville mistake cars for a cannon and push them uphill.
+
+#Edgar Allen Poe House and Grave
+##Baltimore City
+```
+L.marker([39.292498, -76.633042], {icon: new L.icon({iconUrl: 'https://s3.amazonaws.com/com.cartodb.users-assets.production/production/mdeason89/assets/20151009183127skullred2.png'})}).actions.addRemove(S.map)
+L.marker([39.290745, -76.623378], {icon: new L.icon({iconUrl: 'https://s3.amazonaws.com/com.cartodb.users-assets.production/production/mdeason89/assets/20151009183127skullred2.png'})}).actions.addRemove(S.map)
+- center: [39.2926, -76.6281]
+- zoom: 15
+```
+![Edgar Allen Poe House Grave](http://cnsmaryland.org/wp-content/uploads/2015/10/PoeHouse-Baltimore.jpg)
+
+(Photo: Wikimedia Commons)
+
+The southeast corner of Fayette and Greene Streets in Baltimore marks the gravesite of Edgar Allan Poe, one of America's favorite Gothic writers, who died in 1849. The Poe House and Museum, located nearby at 203 Amity Street, allow visitors to tour a tiny room that is presumed to have been Poe’s until he moved to Richmond in 1835. Many claim the house is haunted by the ghost of Poe’s grandmother, Elizabeth Poe, who died in the house in 1835.
+
+Poe’s fascination with murder, morbidity and mourning in his writings have posthumously earned him a pop culture association with the horror genre -- one made even more haunting by the tradition of the mysterious “Poe Toaster.” An annual visitor to Poe’s grave on the anniversary of his death, the unidentified Poe Toaster visited the gravesite from the late 1940s through 2009, leaving behind three roses and an opened bottle of cognac. 
+
+#Glenn Dale Hospital
+##Glenn Dale, Prince George’s County
+```
+L.marker([38.960833, -76.813333], {icon: new L.icon({iconUrl: 'https://s3.amazonaws.com/com.cartodb.users-assets.production/production/mdeason89/assets/20151009183127skullred2.png'})}).actions.addRemove(S.map)
+- center: [38.960833, -76.813333]
+- zoom: 13
+```
+![Glenn Dale Hospital](http://cnsmaryland.org/wp-content/uploads/2015/10/Glenn_dale_hospital_1.jpg)
+
+(Photo: Wikimedia Commons)
+
+An abandoned tuberculosis sanatorium and quarantine hospital, Glenn Dale’s sprawling 216-acre campus is categorically creepy. The facility was built in 1934 and closed in 1981 after asbestos and other code violations were discovered. Its 23 buildings -- which include chapels, playgrounds, morgues and isolation rooms -- are littered with trash, wildlife and graffiti. Many of the buildings have collapsed roofs or significant flooding. An incinerator on the campus, widely rumored to have been used for human remains but actually used for trash, is easy inspiration for the plentiful horror stories that surround this abandoned hospital. 
+
+#The Blue Dog
+##Rose Hill Rd, Port Tobacco, Charles County
+```
+L.marker([38.532763, -77.034788], {icon: new L.icon({iconUrl: 'https://s3.amazonaws.com/com.cartodb.users-assets.production/production/mdeason89/assets/20151009183127skullred2.png'})}).actions.addRemove(S.map)
+- center: [38.532763, -77.034788]
+- zoom: 13
+```
+![The Blue Dog](http://cnsmaryland.org/wp-content/uploads/2015/10/bluedog-e1444284984966.jpg)
+
+(Credit: Madeleine Deason)
+
+One of Maryland’s oldest ghost stories, the Legend of the Blue Dog dates back to the 18th century after the Revolutionary War, when Charles Thomas Sims and his dog were purportedly murdered by Henry Hanos while returning from a Port Tobacco tavern. According to legend, Hanos killed Sims for his gold and property deed, which he then buried under a holly tree on Rose Hill Road. When Hanos returned for his treasure, the ghost of a blue dog frightened him away. Some believe the Blue Dog Ghost still stands guard over his master’s treasure, and his story is still told to school children today.
+
+#Sotterley Plantation
+##Hollywood, St. Mary's County
+```
+L.marker([38.379722, -76.538889], {icon: new L.icon({iconUrl: 'https://s3.amazonaws.com/com.cartodb.users-assets.production/production/mdeason89/assets/20151009183127skullred2.png'})}).actions.addRemove(S.map)
+- center: [38.379722, -76.538889]
+- zoom: 13
+```
+![Scotterley Plantation](https://upload.wikimedia.org/wikipedia/commons/e/ef/Sotterly%2C_State_Route_245_%26_Vista_Road_Vicinity%2C_Hollywood_vicinity_%28St._Mary%27s_County%2C_Maryland%29.jpg)
+
+(Photo: Wikimedia Commons)
+
+Sotterley, founded in 1700, is one of the oldest plantations still standing in the U.S. today. The grounds also contain sawn-log slave quarters built during the 1800s, and the entire grounds are open to visitors. It’s thought that George Plater III, one of its early owners, haunts his longtime home, and the spirits of past slaves linger in the slave cabins.
+
+#Ammendale Normal Institute & Graveyard
+##Beltsville, Prince George's County
+```
+L.marker([39.052222, -76.901389], {icon: new L.icon({iconUrl: 'https://s3.amazonaws.com/com.cartodb.users-assets.production/production/mdeason89/assets/20151009183127skullred2.png'})}).actions.addRemove(S.map)
+- center: [39.052222, -76.901389]
+- zoom: 13
+```
+![Ammendale Normal Institute](https://upload.wikimedia.org/wikipedia/en/c/c7/Front_of_Ammendale_Normal_Institute_-_Main_building.jpg)
+
+(Photo: Wikimedia Commons)
+
+A Catholic monastery that opened in 1880, operated until 1969 and was devastated by a fire in 1998, little remains of Ammendale Normal Institute in Beltsville. Its crumbling Victorian architecture and burned-out remains, combined with adjacent graveyard, are ideal fodder for ghost stories and reports of paranormal activity. 
+
+#Perry Hall Mansion
+##Perry Hall, Baltimore County
+```
+L.marker([39.428611, -76.459167], {icon: new L.icon({iconUrl: 'https://s3.amazonaws.com/com.cartodb.users-assets.production/production/mdeason89/assets/20151009183127skullred2.png'})}).actions.addRemove(S.map)
+- center: [39.428611, -76.459167]
+- zoom: 13
+```
+![Perry Hall Mansion](http://cnsmaryland.org/wp-content/uploads/2015/10/Perry_Hall_Mansion_Dec_09.jpg)
+
+(Photo: Wikimedia Commons)
+
+Corbin Lee, an ancestor of Robert E. Lee, began building this historic mansion in 1773, but died before it was finished. The building was completed in 1776 by Harry Dorsey Gough, who named it after a family castle in England. While the exterior has been renovated, and plans are underway to turn the interior into a museum, the mansion is awaiting fundraising to finish restorations. Ghost stories -- including one that purports Gough and his wife died in the house on a Halloween evening and haunt the building to this day -- abound.
+
+#Moll Dyer's Rock
+##Old Jail Museum, Leonardtown, St. Mary's County
+```
+L.marker([38.290121, -76.635121], {icon: new L.icon({iconUrl: 'https://s3.amazonaws.com/com.cartodb.users-assets.production/production/mdeason89/assets/20151009183127skullred2.png'})}).actions.addRemove(S.map)
+- center: [38.290121, -76.635121]
+- zoom: 13
+```
+![Moll Dyer](http://cnsmaryland.org/wp-content/uploads/2015/10/molldryer-e1444286206856.jpg)
+
+(Credit: Madeleine Deason)
+
+Though no historic record exists of Moll Dyer, hers is perhaps Maryland’s best-known witch story. According to legend, Dyer was accused of witchcraft in the 1600 or 1700s and driven from her home on a cold winter night. She is said to have frozen to death on a large boulder, which allegedly still bears her handprints. The 875-pound boulder said to be the site of her death is now located at the Old Jail Museum, ancillary building of the St. Mary's County Historical Society. 
+
+</script>
+</body>
+</html>
