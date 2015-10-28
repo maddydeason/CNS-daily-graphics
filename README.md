@@ -16,3 +16,4 @@ October >
 <br>
 <a href="http://cnsmaryland.org/interactives/fall-2015-2/Maryland-haunts-10-15/index.html" target="_blank">md-haunts</a>
 <br>
+<a href="http://cnsmaryland.org/2015/10/27/for-some-students-and-schools-sats-and-acts-are-optional/" target="_blank">test-optional</a>
