@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<head>
+  <style>
+  .bar {
+    fill: #ffd500;
+  }
+
+  .bar:hover {
+    fill: #ccaa00;
+    -webkit-transition: ease .3s;
+    -moz-transition: ease .3s;
+    transition: ease .3s;
+  }
+
+  body {
+    font-family: "Roboto", sans-serif;
+    font-size: 10px;
+  }
+
+  .axis path,
+  .axis line {
+    fill: none;
+    stroke: #444;
+    shape-rendering: crispEdges;
+  }
+
+  .x.axis path {
+    display: none;
+  }
+  .y.axis {
+    font-size: 13px;
+  }
+
+  h1 {
+    font-family: "Roboto Condensed", sans-serif;
+    margin-top: 1em;
+  }
+
+  h1, h2, h3 {
+    margin-left: 75px;
+    width: 500px;
+    letter-spacing: .2px;
+  }
+
+  a {
+    text-decoration: none;
+    color: #990000;
+    padding: 3px;
+  }
+
+  a:hover {
+    background-color: #ffd500;
+    color: #fff;
+    -webkit-transition: ease .2s;
+    -moz-transition: ease .2s;
+    transition: ease .2s;
+
+  }
+  /*-- TOOLTIP --*/
+  .d3-tip {
+    font-family: "Roboto";
+    font-size: 10px;
+    line-height: 1;
+    padding: 12px;
+    background: #e0e0e0;
+    color: #222;
+    border-radius: 2px;
+  }
+  /* Creates a small triangle extender for the tooltip */
+  .d3-tip:after {
+    box-sizing: border-box;
+    display: inline;
+    font-size: 10px;
+    width: 100%;
+    line-height: 1;
+    color: #e0e0e0;
+    content: "\25BC";
+    position: absolute;
+    text-align: center;
+  }
+  /* Style northward tooltips differently */
+  .d3-tip.n:after {
+    margin: -1px 0 0 0;
+    top: 100%;
+    left: 0;
+  }
+  </style>
+
+  <link href='https://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
+  <link href='https://fonts.googleapis.com/css?family=Roboto+Condensed:400,700' rel='stylesheet' type='text/css'>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+</head>
+
+<body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
+<script src="http://labratrevenge.com/d3-tip/javascripts/d3.tip.v0.6.3.js"></script>
+
+<h1>Many Colleges and Universities No Longer See SAT, ACT as Essential</h1>
+<h2> For many years, the SAT and ACT have been a staple of many high school students’ college applications and one of the few exams accepted by a majority of schools as proof of classroom capabilities. However, data shows that the number of colleges requiring standardized testing from all students is steadily dropping.</h2>
+<h3>by <a href="https://twitter.com/maddydeason/">Madeleine Deason</a> <a href="http://cnsmaryland.org/">(CAPITAL NEWS SERVICE)</a><br>Source: National Center for Fair & Open Testing</h3>
+<script>
+$(document).ready(function(){
+  var margin = {top: 40, right: 20, bottom: 40, left: 80},
+      width = 500 - margin.left - margin.right,
+      height = 450 - margin.top - margin.bottom;
+
+  var x = d3.scale.ordinal()
+    .rangeRoundBands([0, width], .1);
+
+  var y = d3.scale.linear()
+    .range([height, 0]);
+
+  var xAxis = d3.svg.axis()
+      .scale(x)
+      .orient("bottom");
+
+  var yAxis = d3.svg.axis()
+      .scale(y)
+      .orient("left")
+
+  var tip = d3.tip()
+    .attr('class', 'd3-tip')
+    .offset([-10, 0])
+    .html(function(d) {
+      return "<span style='font-size:12px;font-weight:700;'>" + d.value + " SCHOOLS:</span><br>" + d.schools;
+    })
+
+  var svg = d3.select("body").append("svg")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+  svg.call(tip);
+
+  var data = [
+    {year: "2005", value: 8, schools: "Susquehana University ('Write Option' for all)<br>Sarah Lawrence College<br>Lawrence University<br>The College of the Holy Cross<br>St. Lawrence University<br>Knox College<br>Drew University<br>Chatham College"},
+    {year: "2006", value: 14, schools: "Bennington College<br>Gustavus Adolphus College<br>George Mason University (3.5 GPA)<br>Lebanon Valley College<br>Hobart & William Smith Colleges<br>Providence College<br>Gettysburg College<br>Union College<br>Franklin & Marshall College (extend optional policy to all)<br>King’s College<br>Nazareth College<br>Mitchell College<br>Lake Forest College<br>Salisbury University (3.5 GPA)"},
+    {year: "2007", value: 16, schools: "Simon’s Rock College of Bard<br>Keuka College<br>Stonehill College<br>Whitworth College<br>Denison University<br>Rollins College<br>Worcester Polytechnic Institute<br>Wilson College (3.0 GPA)<br>Georgian Court College<br>Summer 2007 Merrimack College<br>Goucher College<br>Green Mountain College<br>Christopher Newport University (3.5 GPA or top 10%)<br>Wittenberg University<br>Washington College (3.5 GPA or learning disability)<br>Augustana College"},
+    {year: "2008", value: 7, schools: "Baldwin-Wallace College<br>Smith College<br>Wake Forest University<br>Marlboro College<br>Albright College<br>Washington State University (3.5 GPA or top 10%)<br>Belmont Abbey College (3.0 GPA)"},
+    {year: "2009", value: 14, schools: "Sewanee—The University of the South<br>Fairfield University<br>Connecticut College (now completely test-optional)<br>Colby College (“SAT Options” policy requires one of several tests)<br>New York University (similar to Colby)<br>Loyola University Maryland<br>Bryn Mawr (“Test Flexible” policy)<br>Illinois College<br>Assumption College<br>American University<br>Agnes Scott College<br>Sacred Heart University<br>State University of New York (SUNY) – Potsdam<br>Washington & Jefferson College"},
+    {year: "2010", value: 13, schools: "Ursinus College<br>St. Michael’s College<br>St. Anselm College<br>Southern New Hampshire University<br>Marist College<br>Manhattanville College<br>Colorado College (“Flexible Testing” policy)<br>American University<br>Wagner College<br>Salve Regina University<br>Virginia Wesleyan<br>Eugene Lang College – The New School for Liberal Arts<br>The Sage Colleges"},
+    {year: "2011", value: 7, schools: "DePaul University<br>Bryant University<br>Earlham College<br>Nichols College<br>Anna Maria College<br>St. Leo College<br>Clark University"},
+    {year: "2012", value: 6, schools: "Ithaca College<br>College of Saint Rose<br>University of Rochester (“Test Flexible” policy)<br>Lees-McRae College<br>William Jewell College<br>Roger Williams University"},
+    {year: "2013", value: 8, schools: "Catawba College<br>Brandeis University<br>Hood College<br>Lynn University<br>Regis College<br>Saint Joseph’s University<br>Ohio Wesleyan University<br>Presbyterian College"},
+    {year: "2014", value: 17, schools: "Emmanuel College<br>Hampshire College (“Test Blind” – previously test-optional)<br>Old Dominion University<br>Wesleyan University<br>Beloit College<br>Bryn Mawr College (previously “Test Flexible”)<br>Eastern Connecticut State University (3.0 GPA)<br>Hofstra University<br>Montclair State University<br>Plymouth State University<br>Rowan University<br>Temple University<br>Brevard College<br>Duquesne University (3.0 GPA for College of Liberal Arts)<br>Columbus College of Art & Design<br>Mercyhurst University<br>Thomas College"},
+    {year: "2015", value: 29, schools: "Cabrini College, Pine Manor College<br>Radford University (3.5 GPA)<br>Siena College, Transylvania University<br>Virginia Commonwealth University (3.3 GPA)<br>Allegheny College, Dean College<br>Kalamazoo College, Le Moyne College<br>Multnomah University, Lake Erie College<br>University of Mary Washington (3.5 GPA)<br>University of Puget Sound<br>Cornell College, Drake University<br>Franklin Pierce University<br>George Washington University<br>Marymount University (3.0 GPA)<br>Point Park University (3.0 GPA)<br>Rivier University, St. Peters University<br>The Catholic University of America<br>University of Saint Joseph (3.0 GPA)<br>Walsh University, Warren Wilson College<br>Western New England University<br>Trinity College (previously test-flexible)<br>University of Massachusetts -- Lowell"}
+    ];
+
+  x.domain(data.map(function(d) { return d.year; }));
+  y.domain([0, d3.max(data, function(d) { return d.value; })]);
+
+  svg.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + height + ")")
+      .call(xAxis);
+
+  svg.append("g")
+      .attr("class", "y axis")
+      .call(yAxis)
+    .append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("y", -50)
+      .attr("dy", "1em")
+      .style("text-anchor", "end")
+      .text("Number of schools that became 'Test Optional'");
+
+  svg.selectAll(".bar")
+      .data(data)
+    .enter().append("rect")
+      .attr("class", "bar")
+      .attr("x", function(d) { return x(d.year); })
+      .attr("width", x.rangeBand())
+      .attr("y", function(d) { return y(d.value); })
+      .attr("height", function(d) { return height - y(d.value); })
+      .on('mouseover', tip.show)
+      .on('mouseout', tip.hide);
+});
+
+</script>
+</body>
+</html>

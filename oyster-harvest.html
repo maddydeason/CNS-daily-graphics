@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<head>
+  <style>
+  .bar {
+    fill: #ffd500;
+  }
+
+  .bar:hover {
+    fill: #ccaa00;
+    -webkit-transition: ease .3s;
+    -moz-transition: ease .3s;
+    transition: ease .3s;
+  }
+
+  body {
+    font-family: "Roboto", sans-serif;
+    font-size: 10px;
+  }
+
+  .axis path,
+  .axis line {
+    fill: none;
+    stroke: #444;
+    shape-rendering: crispEdges;
+  }
+
+  .x.axis path {
+    display: none;
+  }
+
+  h1 {
+    font-family: "Roboto Condensed", sans-serif;
+    margin-top: 1em;
+  }
+
+  h1, h2, h3 {
+    margin-left: 60px;
+    width: 520px;
+    letter-spacing: .2px;
+  }
+
+  a {
+    text-decoration: none;
+    color: #990000;
+    padding: 3px;
+  }
+
+  a:hover {
+    background-color: #ffd500;
+    color: #fff;
+    -webkit-transition: ease .2s;
+    -moz-transition: ease .2s;
+    transition: ease .2s;
+  }
+
+  .x-label, .y-label {
+    font-size: 12px;
+  }
+  /*-- TOOLTIP --*/
+  .d3-tip {
+    font-family: "Roboto";
+    font-size: 10px;
+    line-height: 1;
+    font-weight: bold;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    border-radius: 2px;
+    -webkit-transition: ease .2s;
+    -moz-transition: ease .2s;
+    transition: ease .2s;
+  }
+  /* Creates a small triangle extender for the tooltip */
+  .d3-tip:after {
+    box-sizing: border-box;
+    display: inline;
+    font-size: 10px;
+    width: 100%;
+    line-height: 1;
+    color: rgba(0, 0, 0, 0.8);
+    content: "\25BC";
+    position: absolute;
+    text-align: center;
+    -webkit-transition: ease .2s;
+  -moz-transition: ease .2s;
+  transition: ease .2s;
+  }
+  /* Style northward tooltips differently */
+  .d3-tip.n:after {
+    margin: -1px 0 0 0;
+    top: 100%;
+    left: 0;
+  }
+  </style>
+
+  <link href='https://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
+  <link href='https://fonts.googleapis.com/css?family=Roboto+Condensed:400,700' rel='stylesheet' type='text/css'>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+</head>
+
+<body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
+<script src="http://labratrevenge.com/d3-tip/javascripts/d3.tip.v0.6.3.js"></script>
+
+<h1>Oyster Harvests Reach Highest Number Since the 1990s</h1>
+<h2>The rise in oyster harvests has been attributed to lower pressure from disease, lower mortality rates, an increase in newly planted baby oyster crops, and oyster growth.</h2>
+<h3>by <a href="https://twitter.com/maddydeason/">Madeleine Deason</a> <a href="http://cnsmaryland.org/">(CAPITAL NEWS SERVICE)</a></h3>
+<script>
+$(document).ready(function(){
+  var margin = {top: 40, right: 20, bottom: 40, left: 60},
+      width = 580 - margin.left - margin.right,
+      height = 450 - margin.top - margin.bottom;
+
+  var x = d3.scale.ordinal()
+    .rangeRoundBands([0, width], .1);
+
+  var y = d3.scale.linear()
+    .range([height, 0]);
+
+  var xAxis = d3.svg.axis()
+      .scale(x)
+      .orient("bottom");
+
+  var yAxis = d3.svg.axis()
+      .scale(y)
+      .orient("left")
+
+  var tip = d3.tip()
+    .attr('class', 'd3-tip')
+    .offset([-10, 0])
+    .html(function(d) {
+      return "<span>" + d.harvest + " thousand bushels</span>";
+    })
+
+  var svg = d3.select("body").append("svg")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+  svg.call(tip);
+
+  var data = [
+    {season: "99-00", harvest: 381},
+    {season: "00-01", harvest: 348},
+    {season: "01-02", harvest: 148},
+    {season: "02-03", harvest: 56},
+    {season: "03-04", harvest: 26},
+    {season: "04-05", harvest: 72},
+    {season: "05-06", harvest: 154},
+    {season: "06-07", harvest: 165},
+    {season: "07-08", harvest: 83},
+    {season: "08-09", harvest: 101},
+    {season: "09-10", harvest: 185},
+    {season: "10-11", harvest: 124},
+    {season: "11-12", harvest: 137},
+    {season: "12-13", harvest: 341},
+    {season: "13-14", harvest: 417}
+    ];
+
+  x.domain(data.map(function(d) { return d.season; }));
+  y.domain([0, d3.max(data, function(d) { return d.harvest; })]);
+
+  svg.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + height + ")")
+      .call(xAxis)
+    .append("text")
+      .attr("class", "x-label")
+      .attr("y", 35)
+      .attr("dx", "27em")
+      .style("text-anchor", "center")
+      .text("Season (October 1–March 31)");
+
+  svg.append("g")
+      .attr("class", "y axis")
+      .call(yAxis)
+    .append("text")
+      .attr("class", "y-label")
+      .attr("transform", "rotate(-90)")
+      .attr("y", -50)
+      .attr("dy", "1em")
+      .style("text-anchor", "end")
+      .text("Total Harvest (thousands of bushels)");
+
+  svg.selectAll(".bar")
+      .data(data)
+    .enter().append("rect")
+      .attr("class", "bar")
+      .attr("x", function(d) { return x(d.season); })
+      .attr("width", x.rangeBand())
+      .attr("y", function(d) { return y(d.harvest); })
+      .attr("height", function(d) { return height - y(d.harvest); })
+      .on('mouseover', tip.show)
+      .on('mouseout', tip.hide);
+});
+
+</script>
+</body>
+</html>
